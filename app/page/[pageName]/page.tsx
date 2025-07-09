@@ -139,7 +139,7 @@ const Page = ({ params }: { params: { pageName: string } }) => {
                       key={ticket.id}
                       ticket={ticket}
                       totalWaitTime={totalWaitTime}
-                      index={index}
+                     
                     />
                   )
                 })}

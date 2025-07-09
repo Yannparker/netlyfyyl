@@ -4,7 +4,6 @@ import { Loader } from 'lucide-react'
 
 interface TicketComponentProps {
   ticket: Ticket
-  index?: number
   totalWaitTime?: number
 }
 
@@ -25,7 +24,6 @@ const getStatusBadge = (status: string) => {
 
 const TicketComponent: React.FC<TicketComponentProps> = ({
   ticket,
-  index,
   totalWaitTime = 0,
 }) => {
   const totalHours = Math.floor(totalWaitTime / 60)

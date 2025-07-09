@@ -111,7 +111,7 @@ const Page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
                 key={ticket.id}
                 ticket={ticket}
                 totalWaitTime={totalWaitTime}
-                index={index}
+                
               />
             )
           })}

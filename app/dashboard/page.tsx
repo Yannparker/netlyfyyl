@@ -84,7 +84,7 @@ const Page = () => {
                                 key={ticket.id}
                                 ticket={ticket}
                                 totalWaitTime={totalWaitTime}
-                                index={index}
+                              
                             />
                         )
                     })}

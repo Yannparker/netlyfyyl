@@ -1,4 +1,5 @@
 "use client"
+
 import { getLastTicketByEmail, getPostNameById, updateTicketStatus } from '@/app/actions'
 import EmptyState from '@/app/components/EmptyState'
 import TicketComponent from '@/app/components/TicketComponent'
@@ -7,7 +8,7 @@ import { Ticket } from '@/type'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 
 type TicketStatus = "PENDING" | "CALL" | "IN_PROGRESS" | "FINISHED"
 
@@ -19,7 +20,7 @@ const Page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
   const [namePoste, setNamePoste] = useState<string | null>(null)
   const router = useRouter()
 
-  const getData = async () => {
+  const getData = useCallback(async () => {
     try {
       if (email) {
         const resolvedParams = await params
@@ -38,11 +39,11 @@ const Page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
     } catch (error) {
       console.error(error)
     }
-  }
+  }, [email, params])
 
   useEffect(() => {
     getData()
-  }, [email, params])
+  }, [getData])
 
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (ticket) {
