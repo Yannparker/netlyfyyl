@@ -18,7 +18,7 @@ const StatCard = ({ title, value }: { title: string; value: number }) => {
     )
 }
 
-const page = () => {
+const Page = () => {
 
     const { user } = useUser()
     const email = user?.primaryEmailAddress?.emailAddress
@@ -96,4 +96,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page

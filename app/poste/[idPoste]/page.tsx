@@ -8,7 +8,7 @@ import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
-const page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
+const Page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -123,4 +123,4 @@ const page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
   );
 }
 
-export default page
+export default Page
