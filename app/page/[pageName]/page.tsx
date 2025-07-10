@@ -1,32 +1,32 @@
 "use client"
 import { createTicket, getServicesByPageName, getTicketsByIds } from '@/app/actions'
-//import EmptyState from '@/app/components/EmptyState'
 import TicketComponent from '@/app/components/TicketComponent'
 import { Ticket } from '@/type'
 import { Service } from '@prisma/client'
 import React, { useEffect, useState } from 'react'
 
-const Page = ({ params }: { params: { pageName: string } }) => {
+export default async function Page(props: { params: Promise<{ pageName: string }> }) {
+  const { pageName } = await props.params
+
   const [tickets, setTickets] = useState<Ticket[]>([])
-  const [pageName, setPageName] = useState<string | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [nameComplete, setNameComplete] = useState<string>("")
   const [ticketNums, setTicketNums] = useState<string[]>([])
   const [countdown, setCountdown] = useState<number>(5)
 
-  const fetchServices = async () => {
-    try {
-      setPageName(params.pageName)
-      const servicesList = await getServicesByPageName(params.pageName)
-      if (servicesList) setServices(servicesList)
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const servicesList = await getServicesByPageName(pageName)
+        if (servicesList) setServices(servicesList)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
     fetchServices()
+
     const stored = localStorage.getItem('ticketNums')
     if (stored && stored !== "undefined") {
       const parsed = JSON.parse(stored)
@@ -35,7 +35,7 @@ const Page = ({ params }: { params: { pageName: string } }) => {
     } else {
       setTicketNums([])
     }
-  }, [])
+  }, [pageName])
 
   const fetchTicketsByIds = async (ticketNums: string[]) => {
     try {
@@ -56,7 +56,7 @@ const Page = ({ params }: { params: { pageName: string } }) => {
       return
     }
     try {
-      const ticketNum = await createTicket(selectedServiceId, nameComplete, params.pageName)
+      const ticketNum = await createTicket(selectedServiceId, nameComplete, pageName)
       if (ticketNum) {
         const updated = [...ticketNums, ticketNum]
         setTicketNums(updated)
@@ -139,7 +139,6 @@ const Page = ({ params }: { params: { pageName: string } }) => {
                       key={ticket.id}
                       ticket={ticket}
                       totalWaitTime={totalWaitTime}
-                     
                     />
                   )
                 })}
@@ -151,5 +150,3 @@ const Page = ({ params }: { params: { pageName: string } }) => {
     </div>
   )
 }
-
-export default Page
