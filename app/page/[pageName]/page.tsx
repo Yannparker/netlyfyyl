@@ -16,38 +16,33 @@ export default function Page({ params }: { params: { pageName: string } }) {
   const [countdown, setCountdown] = useState<number>(5)
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchServicesAndTickets = async () => {
       try {
         const servicesList = await getServicesByPageName(pageName)
         if (servicesList) setServices(servicesList)
+
+        const stored = localStorage.getItem('ticketNums')
+        if (stored && stored !== "undefined") {
+          const parsed = JSON.parse(stored)
+          setTicketNums(parsed)
+
+          if (parsed.length > 0) {
+            const fetched = await getTicketsByIds(parsed)
+            const valid = fetched?.filter(t => t.status !== "FINISHED") || []
+            const validNums = valid.map(t => t.num)
+            localStorage.setItem('ticketNums', JSON.stringify(validNums))
+            setTickets(valid)
+          }
+        } else {
+          setTicketNums([])
+        }
       } catch (error) {
         console.error(error)
       }
     }
 
-    fetchServices()
-
-    const stored = localStorage.getItem('ticketNums')
-    if (stored && stored !== "undefined") {
-      const parsed = JSON.parse(stored)
-      setTicketNums(parsed)
-      if (parsed.length > 0) fetchTicketsByIds(parsed)
-    } else {
-      setTicketNums([])
-    }
+    fetchServicesAndTickets()
   }, [pageName])
-
-  const fetchTicketsByIds = async (ticketNums: string[]) => {
-    try {
-      const fetched = await getTicketsByIds(ticketNums)
-      const valid = fetched?.filter(t => t.status !== "FINISHED") || []
-      const validNums = valid.map(t => t.num)
-      localStorage.setItem('ticketNums', JSON.stringify(validNums))
-      setTickets(valid)
-    } catch (error) {
-      console.error(error)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,14 +65,25 @@ export default function Page({ params }: { params: { pageName: string } }) {
   }
 
   useEffect(() => {
-    const countdownHandler = () => {
+    const countdownHandler = async () => {
       if (countdown === 0) {
-        if (ticketNums.length > 0) fetchTicketsByIds(ticketNums)
+        if (ticketNums.length > 0) {
+          try {
+            const fetched = await getTicketsByIds(ticketNums)
+            const valid = fetched?.filter(t => t.status !== "FINISHED") || []
+            const validNums = valid.map(t => t.num)
+            localStorage.setItem('ticketNums', JSON.stringify(validNums))
+            setTickets(valid)
+          } catch (error) {
+            console.error(error)
+          }
+        }
         setCountdown(5)
       } else {
         setCountdown(prev => prev - 1)
       }
     }
+
     const timer = setTimeout(countdownHandler, 1000)
     return () => clearTimeout(timer)
   }, [countdown, ticketNums])
