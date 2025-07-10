@@ -1,6 +1,6 @@
 "use client"
 import { createTicket, getServicesByPageName, getTicketsByIds } from '@/app/actions'
-import EmptyState from '@/app/components/EmptyState'
+//import EmptyState from '@/app/components/EmptyState'
 import TicketComponent from '@/app/components/TicketComponent'
 import { Ticket } from '@/type'
 import { Service } from '@prisma/client'
