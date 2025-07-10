@@ -1,3 +1,4 @@
+//  Correction ESLint test
 "use client"
 import Wrapper from "./components/Wrapper"
 import { useUser } from "@clerk/nextjs"
