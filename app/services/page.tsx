@@ -7,7 +7,7 @@ import { Service } from '@prisma/client'
 import { Clock, ClockArrowUp, Trash } from 'lucide-react'
 import EmptyState from '../components/EmptyState'
 
-const Page = () => {
+export default function Page() {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress
 
@@ -16,26 +16,13 @@ const Page = () => {
   const [loading, setLoading] = useState(false)
   const [services, setServices] = useState<Service[]>([])
 
-  const fetchServices = async () => {
-    if (!email) return
-    setLoading(true)
-    try {
-      const serviceData = await getServicesByEmail(email)
-      if (serviceData) setServices(serviceData)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleCreateService = async () => {
     if (!serviceName || avgTime <= 0 || !email) return
     try {
       await createService(email, serviceName, avgTime)
       setServiceName("")
       setAvgTime(0)
-      fetchServices()
+      
     } catch (error) {
       console.error(error)
     }
@@ -48,7 +35,7 @@ const Page = () => {
     if (confirmation) {
       try {
         await deleteServiceById(serviceId)
-        fetchServices()
+       
       } catch (error) {
         console.error(error)
       }
@@ -56,6 +43,19 @@ const Page = () => {
   }
 
   useEffect(() => {
+    const fetchServices = async () => {
+      if (!email) return
+      setLoading(true)
+      try {
+        const serviceData = await getServicesByEmail(email)
+        if (serviceData) setServices(serviceData)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     if (email) fetchServices()
   }, [email])
 
@@ -139,5 +139,3 @@ const Page = () => {
     </Wrapper>
   )
 }
-
-export default Page

@@ -8,8 +8,7 @@ import Link from 'next/link'
 import { Trash } from 'lucide-react'
 import EmptyState from '../components/EmptyState'
 
-
-const Page = () => {
+export default function Page() {
   const { user } = useUser()
   const email = user?.primaryEmailAddress?.emailAddress as string
 
@@ -17,24 +16,13 @@ const Page = () => {
   const [loading, setLoading] = useState(false)
   const [posts, setPosts] = useState<Post[]>([])
 
-  const fetchPosts = async () => {
-    if (email) {
-      try {
-        const result = await getPostsByCompanyEmail(email)
-        if (result) setPosts(result)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-  }
-
   const handleCreatePost = async () => {
     if (!newPostName) return
     setLoading(true)
     try {
       await createPost(email, newPostName)
       setNewPostName("")
-      fetchPosts()
+      
     } catch (error) {
       console.error(error)
     } finally {
@@ -45,14 +33,25 @@ const Page = () => {
   const handleDeletePost = async (postId: string) => {
     try {
       await deletePost(postId)
-      fetchPosts()
+    
     } catch (error) {
       console.error(error)
     }
   }
 
   useEffect(() => {
-    if (email) fetchPosts()
+    const fetchPosts = async () => {
+      if (email) {
+        try {
+          const result = await getPostsByCompanyEmail(email)
+          if (result) setPosts(result)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
+
+    fetchPosts()
   }, [email])
 
   return (
@@ -107,6 +106,3 @@ const Page = () => {
     </Wrapper>
   )
 }
-
-export default Page
-
