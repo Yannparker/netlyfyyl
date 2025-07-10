@@ -5,8 +5,8 @@ import { Ticket } from '@/type'
 import { Service } from '@prisma/client'
 import React, { useEffect, useState } from 'react'
 
-export default async function Page(props: { params: Promise<{ pageName: string }> }) {
-  const { pageName } = await props.params
+export default function Page({ params }: { params: { pageName: string } }) {
+  const pageName = params.pageName
 
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [services, setServices] = useState<Service[]>([])

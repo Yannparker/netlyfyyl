@@ -8,92 +8,77 @@ import EmptyState from '../components/EmptyState'
 import TicketComponent from '../components/TicketComponent'
 
 const StatCard = ({ title, value }: { title: string; value: number }) => {
-    return (
-        <div className='stats  md:w-1/3 border border-base-200'>
-            <div className='stat'>
-                <div className='stat-title'>{title}</div>
-                <div className='stat-value'>{value}</div>
-            </div>
-        </div>
-    )
+  return (
+    <div className='stats md:w-1/3 border border-base-200'>
+      <div className='stat'>
+        <div className='stat-title'>{title}</div>
+        <div className='stat-value'>{value}</div>
+      </div>
+    </div>
+  )
 }
 
 const Page = () => {
+  const { user } = useUser()
+  const email = user?.primaryEmailAddress?.emailAddress
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [stats, setStats] = useState({
+    totalTickets: 0,
+    resolvedTickets: 0,
+    pendingTickets: 0
+  })
 
-    const { user } = useUser()
-    const email = user?.primaryEmailAddress?.emailAddress
-    const [tickets, setTickets] = useState<Ticket[]>([])
-
-    const [stats, setStats] = useState<{
-        totalTickets: number;
-        resolvedTickets: number;
-        pendingTickets: number
-    }>({
-        totalTickets: 0,
-        resolvedTickets: 0,
-        pendingTickets: 0
-    })
-
+  useEffect(() => {
     const fetchTicketsAndStats = async () => {
-        if (email) {
-            const data = await get10LstFinishedTicketsByEmail(email)
-            if (data) {
-                setTickets(data)
-            }
-            const statsData = await getTicketStatsByEmail(email)
-            if (statsData) {
-                setStats(statsData)
-            }
+      if (email) {
+        try {
+          const data = await get10LstFinishedTicketsByEmail(email)
+          if (data) setTickets(data)
 
+          const statsData = await getTicketStatsByEmail(email)
+          if (statsData) setStats(statsData)
+        } catch (error) {
+          console.error(error)
         }
+      }
     }
 
-    useEffect(() => {
-        fetchTicketsAndStats()
-    }, [email])
+    fetchTicketsAndStats()
+  }, [email])
 
-    return (
-        <Wrapper>
-            <h1 className="text-2xl font-bold mb-4">Statistiques</h1>
+  return (
+    <Wrapper>
+      <h1 className="text-2xl font-bold mb-4">Statistiques</h1>
 
-            <div className='w-full flex flex-col md:flex-row mb-4 gap-4'>
-                <StatCard title='Total Tickets' value={stats.totalTickets} />
-                <StatCard title='Tickets Résolus' value={stats.resolvedTickets} />
-                <StatCard title='Tickets En Attente' value={stats.pendingTickets} />
-            </div>
+      <div className='w-full flex flex-col md:flex-row mb-4 gap-4'>
+        <StatCard title='Total Tickets' value={stats.totalTickets} />
+        <StatCard title='Tickets Résolus' value={stats.resolvedTickets} />
+        <StatCard title='Tickets En Attente' value={stats.pendingTickets} />
+      </div>
 
-            <h1 className="text-2xl font-bold mb-4">Les 10 derniers Tickets servis</h1>
+      <h1 className="text-2xl font-bold mb-4">Les 10 derniers Tickets servis</h1>
 
-            {tickets.length === 0 ? (
-                <div>
-                    <EmptyState
-                        message={'Aucun ticket en attente'}
-                        IconComponent='Bird'
-                    />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-4">
+      {tickets.length === 0 ? (
+        <EmptyState message={'Aucun ticket en attente'} IconComponent='Bird' />
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {tickets.map((ticket, index) => {
+            const totalWaitTime = tickets
+              .slice(0, index)
+              .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0)
 
-                    {tickets.map((ticket, index) => {
-                        const totalWaitTime = tickets
-                            .slice(0, index)
-                            .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0)
-
-                        return (
-                            <TicketComponent
-                                key={ticket.id}
-                                ticket={ticket}
-                                totalWaitTime={totalWaitTime}
-                              
-                            />
-                        )
-                    })}
-
-                </div>
-            )}
-
-        </Wrapper>
-    )
+            return (
+              <TicketComponent
+                key={ticket.id}
+                ticket={ticket}
+                totalWaitTime={totalWaitTime}
+              />
+            )
+          })}
+        </div>
+      )}
+    </Wrapper>
+  )
 }
 
 export default Page
