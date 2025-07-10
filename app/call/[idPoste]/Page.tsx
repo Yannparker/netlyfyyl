@@ -1,101 +1,87 @@
 "use client"
-
-import { getLastTicketByEmail, getPostNameById, updateTicketStatus } from '@/app/actions'
-import EmptyState from '@/app/components/EmptyState'
+import { getTicketsByIds } from '@/app/actions'
+// ❌ Supprimer les imports inutilisés
+// import EmptyState from '@/app/components/EmptyState'
 import TicketComponent from '@/app/components/TicketComponent'
-import Wrapper from '@/app/components/Wrapper'
 import { Ticket } from '@/type'
-import { useUser } from '@clerk/nextjs'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import React, { useEffect, useState, useCallback } from 'react'
 
-type TicketStatus = "PENDING" | "CALL" | "IN_PROGRESS" | "FINISHED"
+const Page = () => {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [ticketNums, setTicketNums] = useState<string[]>([])
+  const [countdown, setCountdown] = useState<number>(5)
 
-const Page = ({ params }: { params: Promise<{ idPoste: string }> }) => {
-  const { user } = useUser()
-  const email = user?.primaryEmailAddress?.emailAddress
-  const [idPoste, setIdPoste] = useState<string | null>(null)
-  const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [namePoste, setNamePoste] = useState<string | null>(null)
-  const router = useRouter()
-
-  const getData = useCallback(async () => {
-    try {
-      if (email) {
-        const resolvedParams = await params
-        setIdPoste(resolvedParams.idPoste)
-
-        const data = await getLastTicketByEmail(email, resolvedParams.idPoste)
-        if (data) {
-          setTicket(data)
-        }
-
-        const postName = await getPostNameById(resolvedParams.idPoste)
-        if (postName) {
-          setNamePoste(postName)
-        }
-      }
-    } catch (error) {
-      console.error(error)
+  // ✅ Stabiliser la fonction
+  const fetchTickets = useCallback(async () => {
+    const stored = localStorage.getItem('ticketNums')
+    if (stored && stored !== "undefined") {
+      const parsed = JSON.parse(stored)
+      setTicketNums(parsed)
+      const fetched = await getTicketsByIds(parsed)
+      const valid = fetched?.filter(t => t.status !== "FINISHED") || []
+      const validNums = valid.map(t => t.num)
+      localStorage.setItem('ticketNums', JSON.stringify(validNums))
+      setTickets(valid)
+    } else {
+      setTicketNums([])
     }
-  }, [email, params])
+  }, [])
+
+  // ✅ useEffect avec dépendance propre
+  useEffect(() => {
+    fetchTickets()
+  }, [fetchTickets])
 
   useEffect(() => {
-    getData()
-  }, [getData])
-
-  const handleStatusChange = async (newStatus: TicketStatus) => {
-    if (ticket) {
-      try {
-        await updateTicketStatus(ticket.id, newStatus)
-        if (newStatus === "FINISHED") {
-          router.push(`/poste/${idPoste}`)
-        } else {
-          getData()
-        }
-      } catch (error) {
-        console.error(error)
+    const countdownHandler = () => {
+      if (countdown === 0) {
+        if (ticketNums.length > 0) fetchTickets()
+        setCountdown(5)
+      } else {
+        setCountdown(prev => prev - 1)
       }
     }
-  }
+    const timer = setTimeout(countdownHandler, 1000)
+    return () => clearTimeout(timer)
+  }, [countdown, ticketNums, fetchTickets])
 
   return (
-    <Wrapper>
-      <div className='mb-4'>
-        <h1 className="text-2xl font-bold">
-          <span>Poste</span>{" "}
-          <span className='badge badge-accent'>{namePoste ?? "aucun poste"}</span>
-        </h1>
-        <Link className='btn mt-4 btn-sm' href={`/poste/${idPoste}`}>Retour</Link>
-      </div>
-
-      {ticket ? (
+    <div className="px-5 md:px-[10%] mt-8 mb-10">
+      {tickets.length > 0 ? (
         <div>
-          <TicketComponent ticket={ticket} />
-          <div className='flex space-x-4 mt-4'>
-            {ticket.status === "CALL" && (
-              <button
-                className='btn btn-accent btn-outline btn-sm'
-                onClick={() => handleStatusChange('IN_PROGRESS')}
-              >
-                Démarrer le traitement
-              </button>
-            )}
-            {ticket.status === "IN_PROGRESS" && (
-              <button
-                className='btn btn-accent btn-outline btn-sm'
-                onClick={() => handleStatusChange('FINISHED')}
-              >
-                Fin du traitement
-              </button>
-            )}
+          <div className="flex justify-between mb-4">
+            <h1 className="text-2xl font-bold">Vos Tickets</h1>
+            <div className="flex items-center">
+              <span className="relative flex size-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/30 opacity-75" />
+                <span className="relative inline-flex size-3 rounded-full bg-accent" />
+              </span>
+              <div className="ml-2">({countdown}s)</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {tickets.map((ticket, index) => {
+              const totalWaitTime = tickets
+                .slice(0, index)
+                .reduce((acc, t) => acc + t.avgTime, 0)
+              return (
+                <TicketComponent
+                  key={ticket.id}
+                  ticket={ticket}
+                  totalWaitTime={totalWaitTime}
+                 
+                />
+              )
+            })}
           </div>
         </div>
       ) : (
-        <EmptyState message={'Aucun ticket en attente'} IconComponent='UserSearch' />
+        <div className="text-center text-gray-500 mt-8">
+          Aucun ticket actif
+        </div>
       )}
-    </Wrapper>
+    </div>
   )
 }
 
