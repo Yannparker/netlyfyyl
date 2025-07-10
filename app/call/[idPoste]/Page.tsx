@@ -2,6 +2,7 @@
 import { getTicketsByIds } from '@/app/actions'
 // ❌ Supprimer les imports inutilisés
 // import EmptyState from '@/app/components/EmptyState'
+
 import TicketComponent from '@/app/components/TicketComponent'
 import { Ticket } from '@/type'
 import React, { useEffect, useState, useCallback } from 'react'
@@ -10,8 +11,9 @@ const Page = () => {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [ticketNums, setTicketNums] = useState<string[]>([])
   const [countdown, setCountdown] = useState<number>(5)
+//  Correction ESLint test
 
-  // ✅ Stabiliser la fonction
+  // Stabiliser la fonction
   const fetchTickets = useCallback(async () => {
     const stored = localStorage.getItem('ticketNums')
     if (stored && stored !== "undefined") {
@@ -27,7 +29,7 @@ const Page = () => {
     }
   }, [])
 
-  // ✅ useEffect avec dépendance propre
+  //  useEffect avec dépendance propre
   useEffect(() => {
     fetchTickets()
   }, [fetchTickets])
